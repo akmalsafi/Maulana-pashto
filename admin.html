@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin - Maulana Pashto</title>
+  <style>
+    body { font-family: sans-serif; background: #f5f5f5; padding: 2rem; }
+    .hidden { display: none; }
+    .login-box, .panel { background: white; padding: 1.5rem; border-radius: 8px; max-width: 400px; margin: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1);}
+    button { padding: 0.5rem 1rem; border: none; border-radius: 6px; background: #008060; color: white; cursor: pointer;}
+    button:hover { background: #00684d; }
+  </style>
+</head>
+<body>
+  <div class="login-box" id="loginBox">
+    <h2>Admin inloggning</h2>
+    <input type="password" id="password" placeholder="Ange lösenord"><br><br>
+    <button onclick="login()">Logga in</button>
+    <p id="error" style="color:red;"></p>
+  </div>
+
+  <div class="panel hidden" id="adminPanel">
+    <h1>Adminpanel</h1>
+    <p>Välkommen! Här kan du köra översättningsverktyget.</p>
+    <button onclick="window.open('https://colab.research.google.com/github/akmalsafi/maulana-pashto/blob/main/maulana_cps_pashto_translate.ipynb', '_blank')">
+      Öppna översättningsverktyg
+    </button>
+  </div>
+
+  <script>
+    function login() {
+      const pwd = document.getElementById("password").value;
+      if (pwd === "hemligt123") { // <-- ändra lösenord här
+        document.getElementById("loginBox").classList.add("hidden");
+        document.getElementById("adminPanel").classList.remove("hidden");
+      } else {
+        document.getElementById("error").innerText = "Fel lösenord!";
+      }
+    }
+  </script>
+</body>
+</html>
