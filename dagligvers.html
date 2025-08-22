@@ -1,0 +1,102 @@
+<?php
+
+function hämtaDagensVersPashto() {
+    // Välj en pashto-översättning. Tillgängliga nycklar är: 'pashto_zakaria' och 'pashto_rwwad'
+    $translationKey = 'pashto_zakaria';
+
+    // Totalt antal verser i Koranen
+    $totaltAntalVerser = 6236;
+
+    // Använd dagens datum för att generera ett unikt och konsekvent nummer för varje dag
+    $dagensNummer = (int)date('z') + (int)date('Y') * 366; // 'z' är dagens nummer på året (0-365)
+    $versIndex = $dagensNummer % $totaltAntalVerser;
+
+    // Denna funktion behövs för att omvandla det linjära versindexet till sura och ayah
+    // En förenklad metod är att slumpa sura och ayah, men för att säkerställa att alla verser kan visas över tid,
+    // är en mer avancerad mappning nödvändig. För enkelhetens skull använder vi här en slumpmässig metod
+    // som baseras på dagens datum för att få en ny vers varje dag.
+
+    // För att få en mer förutsägbar daglig vers, kan vi använda en seedad slumpgenerator.
+    srand(mktime(0, 0, 0, date('m'), date('d'), date('Y')));
+    
+    // Slumpa ett sura-nummer (1-114)
+    $suraNummer = rand(1, 114);
+
+    // Hämta information om den valda suran för att veta antalet ayahs
+    // Denna information kan lagras lokalt för att undvika extra API-anrop
+    // För detta exempel antar vi ett max antal ayahs per sura
+    $maxAyahs = 286; // Längsta suran (Al-Baqarah)
+    $ayahNummer = rand(1, $maxAyahs);
+
+
+    // Bygg URL för API-anropet
+    $url = "https://quranenc.com/api/v1/translation/aya/{$translationKey}/{$suraNummer}/{$ayahNummer}";
+
+    // Använd cURL för att hämta data från API:et
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    // Hantera eventuella fel
+    if ($httpCode != 200 || empty($response)) {
+        // Om den slumpade versen inte finns, försök med en känd vers (t.ex. första versen i Al-Fatiha)
+        $url = "https://quranenc.com/api/v1/translation/aya/{$translationKey}/1/1";
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        $response = curl_exec($ch);
+        curl_close($ch);
+    }
+    
+    $data = json_decode($response, true);
+
+    if (json_last_error() === JSON_ERROR_NONE && isset($data['result'][0])) {
+        return $data['result'][0];
+    } else {
+        return null;
+    }
+}
+
+// Hämta och visa dagens vers
+$dagensVers = hämtaDagensVersPashto();
+
+?>
+
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dagens Vers från Koranen på Pashto</title>
+    <style>
+        body { font-family: sans-serif; line-height: 1.6; }
+        .vers-container {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .arabiska { font-size: 1.5em; text-align: right; margin-bottom: 10px; }
+        .pashto { font-size: 1.2em; margin-bottom: 15px; }
+        .referens { font-style: italic; color: #555; }
+    </style>
+</head>
+<body>
+
+<div class="vers-container">
+    <h2>Dagens Vers från Koranen på Pashto</h2>
+    <?php if ($dagensVers): ?>
+        <p class="arabiska"><?php echo htmlspecialchars($dagensVers['arabic_text']); ?></p>
+        <p class="pashto"><?php echo htmlspecialchars($dagensVers['translation']); ?></p>
+        <p class="referens">Sura <?php echo htmlspecialchars($dagensVers['sura']); ?>, Vers <?php echo htmlspecialchars($dagensVers['aya']); ?></p>
+    <?php else: ?>
+        <p>Kunde inte hämta dagens vers. Vänligen försök igen senare.</p>
+    <?php endif; ?>
+</div>
+
+</body>
+</html>
